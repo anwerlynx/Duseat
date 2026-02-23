@@ -32,6 +32,8 @@ import AppSettings from './components/shared/AppSettings';
 import FaqPage from './components/shared/FaqPage';
 import SupportPage from './components/shared/SupportPage';
 import NotificationsPage from './components/shared/NotificationsPage';
+import DuseatVerified from './components/shared/DuseatVerified';
+import SystemSettings from './components/shared/SystemSettings';
 
 function Root() {
   return <Outlet />;
@@ -71,6 +73,8 @@ export const router = createBrowserRouter([
       { path: 'agent/support', Component: SupportPage },
       { path: 'agent/notifications', Component: NotificationsPage },
       { path: 'agent/comments/:requestId', Component: CommentsPage },
+      { path: 'agent/verified', Component: DuseatVerified },
+      { path: 'agent/system', Component: SystemSettings },
 
       // ─── Investor routes ─────────────────────────────────
       { path: 'investor', Component: InvestorHome },
@@ -95,6 +99,8 @@ export const router = createBrowserRouter([
       { path: 'investor/faq', Component: FaqPage },
       { path: 'investor/support', Component: SupportPage },
       { path: 'investor/notifications', Component: NotificationsPage },
+      { path: 'investor/verified', Component: DuseatVerified },
+      { path: 'investor/system', Component: SystemSettings },
 
       // ─── Shared ──────────────────────────────────────────
       { path: 'deal/:id', Component: DealConfirmation },

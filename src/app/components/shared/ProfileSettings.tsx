@@ -198,7 +198,7 @@ export default function ProfileSettings() {
             <p style={{ fontFamily: "'TT Commons', sans-serif", fontSize: '19px', fontWeight: 600, color: '#050B2E' }}>App Details</p>
             <div className="flex gap-6 items-center">
               <AppIconBtn icon={<Lock size={22} color="#333" />} label="Privacy" onClick={() => navigate(`${base}/app-settings`)} />
-              <AppIconBtn icon={<SlidersHorizontal size={22} color="#333" />} label="System" onClick={() => navigate(`${base}/app-settings`)} />
+              <AppIconBtn icon={<SlidersHorizontal size={22} color="#333" />} label="System" onClick={() => navigate(`${base}/system`)} />
               <AppIconBtn icon={<Globe size={22} color="#333" />} label="Language" onClick={() => navigate(`${base}/languages`)} />
               <AppIconBtn icon={<HelpCircle size={22} color="#333" />} label="FAQ" onClick={() => navigate(`${base}/faq`)} />
             </div>
@@ -213,8 +213,8 @@ export default function ProfileSettings() {
             />
             <RowItem
               icon={<Shield size={20} />}
-              label="Dueset verified"
-              onClick={() => navigate(isAgent ? '/agent/verification' : '/investor/profile')}
+              label="Duseat Verified"
+              onClick={() => navigate(`${base}/verified`)}
             />
             <RowItem
               icon={<Globe size={20} />}
