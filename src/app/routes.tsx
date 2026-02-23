@@ -7,6 +7,8 @@ import AgentOffers from './components/agent/AgentOffers';
 import AgentProfilePage from './components/agent/AgentProfilePage';
 import AgentVerification from './components/agent/AgentVerification';
 import PlansPage from './components/agent/PlansPage';
+import PaymentPage from './components/agent/PaymentPage';
+import MySubscription from './components/agent/MySubscription';
 import AgentFavourites from './components/agent/AgentFavourites';
 import OfferSentPage from './components/agent/OfferSentPage';
 import CommentsPage from './components/agent/CommentsPage';
@@ -55,6 +57,9 @@ export const router = createBrowserRouter([
       { path: 'agent/profile', Component: AgentProfilePage },
       { path: 'agent/verification', Component: AgentVerification },
       { path: 'agent/plans', Component: PlansPage },
+      { path: 'agent/payment/:planId/:billing', Component: PaymentPage },
+      { path: 'agent/payment/:planId', Component: PaymentPage },
+      { path: 'agent/subscription', Component: MySubscription },
       { path: 'agent/favourites', Component: AgentFavourites },
       // Agent Settings group
       { path: 'agent/settings', Component: ProfileSettings },

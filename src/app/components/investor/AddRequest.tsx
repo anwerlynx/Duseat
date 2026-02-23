@@ -1,7 +1,8 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router';
-import { ChevronLeft, ChevronRight, Check } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router';
+import { ChevronLeft, ChevronRight, Check, Pencil } from 'lucide-react';
 import { StatusBar } from '../StatusBar';
+import { MY_REQUESTS } from '../MockData';
 
 interface RequestForm {
   // Step 1: Purpose
@@ -58,90 +59,110 @@ const DEVELOPERS = [
   'Azizi Developments'
 ];
 
-export default function AddRequest() {
-  const navigate = useNavigate();
-  const [currentStep, setCurrentStep] = useState(1);
-  const [submitted, setSubmitted] = useState(false);
-  const [form, setForm] = useState<RequestForm>({
-    purpose: '',
+const EMPTY_FORM: RequestForm = {
+  purpose: '',
+  investmentType: '',
+  unitType: '',
+  commercialOther: '',
+  bedrooms: '',
+  unitStatus: '',
+  budgetRange: '',
+  areas: [],
+  paymentMethod: '',
+  mortgageEligible: '',
+  paymentPlan: '',
+  hasDeveloperPreference: false,
+  selectedDevelopers: [],
+  notes: '',
+};
+
+/* ─── map existing MY_REQUEST data → RequestForm ─── */
+function mapRequestToForm(req: typeof MY_REQUESTS[0]): RequestForm {
+  const bedroomsMap: { [k: number]: RequestForm['bedrooms'] } = {
+    0: 'Studio', 1: '1 BHK', 2: '2 BHK', 3: '3 BHK',
+    4: '4 BHK', 5: '5 BHK', 6: '6 BHK',
+  };
+  return {
+    purpose: req.purpose as RequestForm['purpose'],
     investmentType: '',
-    unitType: '',
+    unitType: (req.propertyType === 'Commercial' ? 'Office' : req.propertyType) as RequestForm['unitType'],
     commercialOther: '',
-    bedrooms: '',
-    unitStatus: '',
-    budgetRange: '',
-    areas: [],
-    paymentMethod: '',
+    bedrooms: req.bedrooms != null
+      ? (bedroomsMap[req.bedrooms] ?? `${req.bedrooms} BHK` as any)
+      : '',
+    unitStatus: (req.unitStatus === 'Off-plan' ? 'Offplan' : req.unitStatus) as RequestForm['unitStatus'],
+    budgetRange: req.budget ?? '',
+    areas: req.area ? [req.area] : [],
+    paymentMethod: req.method as RequestForm['paymentMethod'],
     mortgageEligible: '',
     paymentPlan: '',
     hasDeveloperPreference: false,
     selectedDevelopers: [],
-    notes: '',
-  });
+    notes: req.additionalNotes ?? req.note ?? '',
+  };
+}
 
-  // Determine the flow dynamically
+export default function AddRequest() {
+  const navigate = useNavigate();
+  const { requestId } = useParams<{ requestId: string }>();
+  const isEditMode = !!requestId;
+
+  const existingReq = isEditMode
+    ? MY_REQUESTS.find(r => r.id === requestId) ?? null
+    : null;
+
+  // In edit mode: start at step 0 = Summary screen; else step 1
+  const [currentStep, setCurrentStep] = useState(isEditMode ? 0 : 1);
+  const [submitted, setSubmitted] = useState(false);
+  const [form, setForm] = useState<RequestForm>(
+    existingReq ? mapRequestToForm(existingReq) : EMPTY_FORM
+  );
+
+  // If requestId changes (unlikely but safe)
+  useEffect(() => {
+    if (existingReq) {
+      setForm(mapRequestToForm(existingReq));
+      setCurrentStep(0);
+    }
+  }, [requestId]);
+
+  /* ─── step logic ─── */
+  const isCommercial = () =>
+    form.unitType === 'Office' || form.unitType === 'Retail Shop' ||
+    form.unitType === 'Warehouse' || form.unitType === 'Other';
+
   const getNextStep = (): number => {
     if (currentStep === 1 && form.purpose) {
-      // After purpose, check if Investment
-      if (form.purpose === 'Investment') return 2; // Investment Type
-      else return 3; // Skip to Unit Type
+      return form.purpose === 'Investment' ? 2 : 3;
     }
-    if (currentStep === 2 && form.investmentType) {
-      return 3; // Unit Type
-    }
+    if (currentStep === 2 && form.investmentType) return 3;
     if (currentStep === 3 && form.unitType) {
-      // If Commercial, skip bedrooms
-      if (isCommercial()) return 5; // Unit Status
-      else return 4; // Bedrooms
+      return isCommercial() ? 5 : 4;
     }
-    if (currentStep === 4 && form.bedrooms) {
-      return 5; // Unit Status
-    }
+    if (currentStep === 4 && form.bedrooms) return 5;
     if (currentStep === 5 && form.unitStatus) {
-      if (form.unitStatus === 'Ready') return 6; // Budget
-      else return 10; // Payment Plan
+      return form.unitStatus === 'Ready' ? 6 : 10;
     }
-    if (currentStep === 6 && form.budgetRange) {
-      return 7; // Areas
-    }
-    if (currentStep === 7 && form.areas.length > 0) {
-      return 8; // Payment Method
-    }
+    if (currentStep === 6 && form.budgetRange) return 7;
+    if (currentStep === 7 && form.areas.length > 0) return 8;
     if (currentStep === 8 && form.paymentMethod) {
-      if (form.paymentMethod === 'Mortgage') return 9; // Mortgage Eligible
-      else return 13; // Final Notes
+      return form.paymentMethod === 'Mortgage' ? 9 : 13;
     }
-    if (currentStep === 9 && form.mortgageEligible) {
-      return 13; // Final Notes
-    }
-    // Offplan flow
-    if (currentStep === 10 && form.paymentPlan) {
-      return 11; // Developer preference
-    }
+    if (currentStep === 9 && form.mortgageEligible) return 13;
+    if (currentStep === 10 && form.paymentPlan) return 11;
     if (currentStep === 11) {
-      if (form.hasDeveloperPreference) return 12; // Developer list
-      else return 13; // Final Notes
+      return form.hasDeveloperPreference ? 12 : 13;
     }
-    if (currentStep === 12 && form.selectedDevelopers.length > 0) {
-      return 13; // Final Notes
-    }
-    if (currentStep === 13) {
-      return 14; // Review
-    }
+    if (currentStep === 12 && form.selectedDevelopers.length > 0) return 13;
+    if (currentStep === 13) return 14;
     return currentStep + 1;
   };
 
   const getPrevStep = (): number => {
     if (currentStep === 2) return 1;
-    if (currentStep === 3) {
-      if (form.purpose === 'Investment') return 2;
-      else return 1;
-    }
+    if (currentStep === 3) return form.purpose === 'Investment' ? 2 : 1;
     if (currentStep === 4) return 3;
-    if (currentStep === 5) {
-      if (isCommercial()) return 3;
-      else return 4;
-    }
+    if (currentStep === 5) return isCommercial() ? 3 : 4;
     if (currentStep === 6) return 5;
     if (currentStep === 7) return 6;
     if (currentStep === 8) return 7;
@@ -151,19 +172,13 @@ export default function AddRequest() {
     if (currentStep === 12) return 11;
     if (currentStep === 13) {
       if (form.unitStatus === 'Ready') {
-        if (form.paymentMethod === 'Mortgage') return 9;
-        else return 8;
+        return form.paymentMethod === 'Mortgage' ? 9 : 8;
       } else {
-        if (form.hasDeveloperPreference) return 12;
-        else return 11;
+        return form.hasDeveloperPreference ? 12 : 11;
       }
     }
     if (currentStep === 14) return 13;
     return currentStep - 1;
-  };
-
-  const isCommercial = () => {
-    return form.unitType === 'Office' || form.unitType === 'Retail Shop' || form.unitType === 'Warehouse' || form.unitType === 'Other';
   };
 
   const canContinue = (): boolean => {
@@ -177,9 +192,9 @@ export default function AddRequest() {
     if (currentStep === 8) return !!form.paymentMethod;
     if (currentStep === 9) return !!form.mortgageEligible;
     if (currentStep === 10) return !!form.paymentPlan;
-    if (currentStep === 11) return true; // Developer preference is optional
+    if (currentStep === 11) return true;
     if (currentStep === 12) return form.selectedDevelopers.length > 0 || !form.hasDeveloperPreference;
-    if (currentStep === 13) return true; // Notes are optional
+    if (currentStep === 13) return true;
     return true;
   };
 
@@ -194,8 +209,13 @@ export default function AddRequest() {
   };
 
   const handleBack = () => {
-    if (currentStep === 1) {
+    if (currentStep === 0) {
       navigate(-1);
+    } else if (currentStep === 1 && !isEditMode) {
+      navigate(-1);
+    } else if (currentStep === 1 && isEditMode) {
+      // go back to summary
+      setCurrentStep(0);
     } else {
       setCurrentStep(getPrevStep());
     }
@@ -234,6 +254,7 @@ export default function AddRequest() {
     return summary;
   };
 
+  /* ─── Success screen ─── */
   if (submitted) {
     return (
       <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6">
@@ -241,24 +262,142 @@ export default function AddRequest() {
           <Check size={40} color="#01CBD2" strokeWidth={3} />
         </div>
         <p className="text-[#050B2E] text-center mb-2" style={{ fontSize: '22px', fontWeight: 700 }}>
-          Request Published!
+          {isEditMode ? 'Request Updated!' : 'Request Published!'}
         </p>
         <p className="text-[#999] text-center" style={{ fontSize: '15px' }}>
-          Agents will start sending you offers shortly.
+          {isEditMode
+            ? 'Your changes have been saved successfully.'
+            : 'Agents will start sending you offers shortly.'}
         </p>
       </div>
     );
   }
 
+  /* ─── Summary screen (Edit Mode, step 0) ─── */
+  if (currentStep === 0 && isEditMode) {
+    const summaryRows: { label: string; value: string; step: number }[] = [
+      { label: 'Purpose', value: form.purpose || '—', step: 1 },
+      ...(form.investmentType ? [{ label: 'Investment Type', value: form.investmentType, step: 2 }] : []),
+      { label: 'Unit Type', value: (form.unitType === 'Other' ? form.commercialOther : form.unitType) || '—', step: 3 },
+      ...(form.bedrooms ? [{ label: 'Bedrooms', value: form.bedrooms, step: 4 }] : []),
+      { label: 'Unit Status', value: form.unitStatus || '—', step: 5 },
+      ...(form.budgetRange ? [{ label: 'Budget', value: form.budgetRange, step: 6 }] : []),
+      ...(form.areas.length > 0 ? [{ label: 'Preferred Areas', value: form.areas.join(', '), step: 7 }] : []),
+      ...(form.paymentMethod ? [{ label: 'Payment Method', value: form.paymentMethod, step: 8 }] : []),
+      ...(form.mortgageEligible ? [{ label: 'Mortgage Eligible', value: form.mortgageEligible, step: 9 }] : []),
+      ...(form.paymentPlan ? [{ label: 'Payment Plan', value: form.paymentPlan, step: 10 }] : []),
+      ...(form.selectedDevelopers.length > 0 ? [{ label: 'Developers', value: form.selectedDevelopers.join(', '), step: 12 }] : []),
+      { label: 'Additional Notes', value: form.notes || 'None', step: 13 },
+    ];
+
+    return (
+      <div className="flex flex-col min-h-screen bg-[#F8F8F8]">
+        <div className="bg-white shrink-0">
+          <StatusBar />
+          <div className="flex items-center px-4 h-14 border-b border-[#F8F8F8]">
+            <button
+              onClick={() => navigate(-1)}
+              className="w-9 h-9 rounded-full flex items-center justify-center bg-[#F0F0F0]"
+            >
+              <ChevronLeft size={18} color="#333" />
+            </button>
+            <p className="flex-1 text-center text-[#050B2E]" style={{ fontSize: '20px', fontWeight: 600 }}>
+              Edit Request
+            </p>
+            <div className="w-9" />
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-4 pt-4 pb-6">
+          {/* Summary Card */}
+          <div
+            className="rounded-[20px] p-5 mb-5"
+            style={{
+              background: 'linear-gradient(135deg, #050B2E 0%, #0c1654 100%)',
+              boxShadow: '0 6px 24px rgba(5,11,46,0.25)',
+            }}
+          >
+            <p className="text-[#01CBD2] mb-1" style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '1px' }}>
+              YOUR REQUEST
+            </p>
+            <p className="text-white mb-4" style={{ fontSize: '16px', lineHeight: 1.5, fontWeight: 500 }}>
+              {existingReq?.title ?? generateSummary()}
+            </p>
+            <div className="flex gap-2 flex-wrap">
+              {form.budgetRange && (
+                <span className="bg-white/10 rounded-full px-3 py-1 text-white" style={{ fontSize: '12px' }}>
+                  💰 {form.budgetRange}
+                </span>
+              )}
+              {form.unitStatus && (
+                <span className="bg-white/10 rounded-full px-3 py-1 text-white" style={{ fontSize: '12px' }}>
+                  🏗️ {form.unitStatus === 'Offplan' ? 'Off-plan' : form.unitStatus}
+                </span>
+              )}
+              {form.areas.length > 0 && (
+                <span className="bg-white/10 rounded-full px-3 py-1 text-white" style={{ fontSize: '12px' }}>
+                  📍 {form.areas[0]}{form.areas.length > 1 ? ` +${form.areas.length - 1}` : ''}
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Tap-to-Edit rows */}
+          <p className="text-[#999] mb-3 px-1" style={{ fontSize: '13px', fontWeight: 500 }}>
+            Tap any field to edit it
+          </p>
+
+          <div className="bg-white rounded-[18px] overflow-hidden" style={{ boxShadow: '0 1px 6px rgba(0,0,0,0.07)' }}>
+            {summaryRows.map((row, i) => (
+              <button
+                key={row.step}
+                onClick={() => setCurrentStep(row.step)}
+                className={`w-full flex items-center justify-between px-4 py-4 text-left ${i > 0 ? 'border-t border-[#F8F8F8]' : ''
+                  } active:bg-[#F8F8F8] transition-colors`}
+              >
+                <div className="flex-1 min-w-0 mr-3">
+                  <p className="text-[#A6A6A6] mb-0.5" style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.4px' }}>
+                    {row.label.toUpperCase()}
+                  </p>
+                  <p className="text-[#050B2E] truncate" style={{ fontSize: '15px', fontWeight: 500 }}>
+                    {row.value}
+                  </p>
+                </div>
+                <div
+                  className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
+                  style={{ background: 'rgba(1,203,210,0.08)' }}
+                >
+                  <Pencil size={13} color="#01CBD2" />
+                </div>
+              </button>
+            ))}
+          </div>
+
+          {/* Save button */}
+          <button
+            onClick={handleSubmit}
+            className="w-full h-12 rounded-full mt-6 flex items-center justify-center gap-2"
+            style={{ background: '#01CBD2' }}
+          >
+            <Check size={18} color="white" />
+            <span className="text-white" style={{ fontSize: '16px', fontWeight: 600 }}>
+              Save Changes
+            </span>
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  /* ─── Shared option button ─── */
   const OptionButton = ({ value, label, selected, onSelect, icon }: {
     value: string; label: string; selected: boolean; onSelect: () => void; icon?: string;
   }) => (
     <button
       type="button"
       onClick={onSelect}
-      className={`w-full h-14 rounded-[14px] flex items-center justify-between px-4 border-2 transition-all ${
-        selected ? 'border-[#01CBD2] bg-[rgba(1,203,210,0.06)]' : 'border-[#E8E8E8] bg-white'
-      }`}
+      className={`w-full h-14 rounded-[14px] flex items-center justify-between px-4 border-2 transition-all ${selected ? 'border-[#01CBD2] bg-[rgba(1,203,210,0.06)]' : 'border-[#E8E8E8] bg-white'
+        }`}
     >
       <span style={{ fontSize: '16px', fontWeight: selected ? 600 : 400, color: selected ? '#01CBD2' : '#050B2E' }}>
         {icon && <span className="mr-2">{icon}</span>}
@@ -269,19 +408,18 @@ export default function AddRequest() {
   );
 
   const getTotalSteps = (): number => {
-    // Approximate total steps based on selections
-    let total = 1; // Purpose
-    if (form.purpose === 'Investment') total++; // Investment Type
-    total++; // Unit Type
-    if (!isCommercial()) total++; // Bedrooms
-    total++; // Unit Status
+    let total = 1;
+    if (form.purpose === 'Investment') total++;
+    total++;
+    if (!isCommercial()) total++;
+    total++;
     if (form.unitStatus === 'Ready') {
-      total += 4; // Budget, Areas, Payment, Mortgage (if applicable)
+      total += 4;
     } else if (form.unitStatus === 'Offplan') {
-      total += 2; // Payment Plan, Developer
-      if (form.hasDeveloperPreference) total++; // Developer list
+      total += 2;
+      if (form.hasDeveloperPreference) total++;
     }
-    total += 2; // Notes + Review
+    total += 2;
     return total;
   };
 
@@ -303,6 +441,7 @@ export default function AddRequest() {
     return '';
   };
 
+  /* ─── step-based form ─── */
   return (
     <div className="flex flex-col min-h-screen bg-white">
       <div className="shrink-0">
@@ -316,9 +455,20 @@ export default function AddRequest() {
             <ChevronLeft size={18} color="#333" />
           </button>
           <p className="flex-1 text-center text-[#050B2E]" style={{ fontSize: '20px', fontWeight: 600 }}>
-            Add Request
+            {isEditMode ? 'Edit Request' : 'Add Request'}
           </p>
-          <div className="w-9" />
+          {/* In edit mode show "Summary" pill to go back to summary */}
+          {isEditMode ? (
+            <button
+              onClick={() => setCurrentStep(0)}
+              className="h-8 px-3 rounded-full flex items-center gap-1"
+              style={{ background: 'rgba(1,203,210,0.1)' }}
+            >
+              <span style={{ fontSize: '12px', color: '#01CBD2', fontWeight: 600 }}>Summary</span>
+            </button>
+          ) : (
+            <div className="w-9" />
+          )}
         </div>
 
         {/* Progress */}
@@ -351,25 +501,13 @@ export default function AddRequest() {
               Are you buying for living or investment?
             </p>
             <div className="space-y-3">
-              <OptionButton
-                value="Living"
-                label="For Living"
-                icon="🏠"
-                selected={form.purpose === 'Living'}
-                onSelect={() => setForm(f => ({ ...f, purpose: 'Living' }))}
-              />
-              <OptionButton
-                value="Investment"
-                label="For Investment"
-                icon="📈"
-                selected={form.purpose === 'Investment'}
-                onSelect={() => setForm(f => ({ ...f, purpose: 'Investment' }))}
-              />
+              <OptionButton value="Living" label="For Living" icon="🏠" selected={form.purpose === 'Living'} onSelect={() => setForm(f => ({ ...f, purpose: 'Living' }))} />
+              <OptionButton value="Investment" label="For Investment" icon="📈" selected={form.purpose === 'Investment'} onSelect={() => setForm(f => ({ ...f, purpose: 'Investment' }))} />
             </div>
           </div>
         )}
 
-        {/* Step 2: Investment Type (only for Investment) */}
+        {/* Step 2: Investment Type */}
         {currentStep === 2 && form.purpose === 'Investment' && (
           <div>
             <p className="text-[#050B2E] mb-2" style={{ fontSize: '22px', fontWeight: 700 }}>
@@ -379,20 +517,8 @@ export default function AddRequest() {
               Select your investment category
             </p>
             <div className="space-y-3">
-              <OptionButton
-                value="Residential"
-                label="Residential"
-                icon="🏘️"
-                selected={form.investmentType === 'Residential'}
-                onSelect={() => setForm(f => ({ ...f, investmentType: 'Residential' }))}
-              />
-              <OptionButton
-                value="Commercial"
-                label="Commercial"
-                icon="🏢"
-                selected={form.investmentType === 'Commercial'}
-                onSelect={() => setForm(f => ({ ...f, investmentType: 'Commercial' }))}
-              />
+              <OptionButton value="Residential" label="Residential" icon="🏘️" selected={form.investmentType === 'Residential'} onSelect={() => setForm(f => ({ ...f, investmentType: 'Residential' }))} />
+              <OptionButton value="Commercial" label="Commercial" icon="🏢" selected={form.investmentType === 'Commercial'} onSelect={() => setForm(f => ({ ...f, investmentType: 'Commercial' }))} />
             </div>
           </div>
         )}
@@ -407,36 +533,12 @@ export default function AddRequest() {
               Select the type of property
             </p>
             <div className="space-y-3">
-              {form.investmentType === 'Commercial' || (form.purpose === 'Investment' && form.investmentType === 'Commercial') ? (
+              {form.investmentType === 'Commercial' ? (
                 <>
-                  <OptionButton
-                    value="Office"
-                    label="Office"
-                    icon="🏢"
-                    selected={form.unitType === 'Office'}
-                    onSelect={() => setForm(f => ({ ...f, unitType: 'Office' }))}
-                  />
-                  <OptionButton
-                    value="Retail Shop"
-                    label="Retail Shop"
-                    icon="🏪"
-                    selected={form.unitType === 'Retail Shop'}
-                    onSelect={() => setForm(f => ({ ...f, unitType: 'Retail Shop' }))}
-                  />
-                  <OptionButton
-                    value="Warehouse"
-                    label="Warehouse"
-                    icon="🏭"
-                    selected={form.unitType === 'Warehouse'}
-                    onSelect={() => setForm(f => ({ ...f, unitType: 'Warehouse' }))}
-                  />
-                  <OptionButton
-                    value="Other"
-                    label="Other"
-                    icon="📦"
-                    selected={form.unitType === 'Other'}
-                    onSelect={() => setForm(f => ({ ...f, unitType: 'Other' }))}
-                  />
+                  <OptionButton value="Office" label="Office" icon="🏢" selected={form.unitType === 'Office'} onSelect={() => setForm(f => ({ ...f, unitType: 'Office' }))} />
+                  <OptionButton value="Retail Shop" label="Retail Shop" icon="🏪" selected={form.unitType === 'Retail Shop'} onSelect={() => setForm(f => ({ ...f, unitType: 'Retail Shop' }))} />
+                  <OptionButton value="Warehouse" label="Warehouse" icon="🏭" selected={form.unitType === 'Warehouse'} onSelect={() => setForm(f => ({ ...f, unitType: 'Warehouse' }))} />
+                  <OptionButton value="Other" label="Other" icon="📦" selected={form.unitType === 'Other'} onSelect={() => setForm(f => ({ ...f, unitType: 'Other' }))} />
                   {form.unitType === 'Other' && (
                     <input
                       type="text"
@@ -450,34 +552,16 @@ export default function AddRequest() {
                 </>
               ) : (
                 <>
-                  <OptionButton
-                    value="Apartment"
-                    label="Apartment"
-                    icon="🏢"
-                    selected={form.unitType === 'Apartment'}
-                    onSelect={() => setForm(f => ({ ...f, unitType: 'Apartment' }))}
-                  />
-                  <OptionButton
-                    value="Villa"
-                    label="Villa"
-                    icon="🏡"
-                    selected={form.unitType === 'Villa'}
-                    onSelect={() => setForm(f => ({ ...f, unitType: 'Villa' }))}
-                  />
-                  <OptionButton
-                    value="Townhouse"
-                    label="Townhouse"
-                    icon="🏘️"
-                    selected={form.unitType === 'Townhouse'}
-                    onSelect={() => setForm(f => ({ ...f, unitType: 'Townhouse' }))}
-                  />
+                  <OptionButton value="Apartment" label="Apartment" icon="🏢" selected={form.unitType === 'Apartment'} onSelect={() => setForm(f => ({ ...f, unitType: 'Apartment' }))} />
+                  <OptionButton value="Villa" label="Villa" icon="🏡" selected={form.unitType === 'Villa'} onSelect={() => setForm(f => ({ ...f, unitType: 'Villa' }))} />
+                  <OptionButton value="Townhouse" label="Townhouse" icon="🏘️" selected={form.unitType === 'Townhouse'} onSelect={() => setForm(f => ({ ...f, unitType: 'Townhouse' }))} />
                 </>
               )}
             </div>
           </div>
         )}
 
-        {/* Step 4: Bedrooms (for residential) */}
+        {/* Step 4: Bedrooms */}
         {currentStep === 4 && !isCommercial() && (
           <div>
             <p className="text-[#050B2E] mb-2" style={{ fontSize: '22px', fontWeight: 700 }}>
@@ -492,15 +576,10 @@ export default function AddRequest() {
                   key={br}
                   type="button"
                   onClick={() => setForm(f => ({ ...f, bedrooms: br as any }))}
-                  className={`h-14 rounded-[14px] border-2 transition-all ${
-                    form.bedrooms === br ? 'border-[#01CBD2] bg-[rgba(1,203,210,0.06)]' : 'border-[#E8E8E8]'
-                  }`}
+                  className={`h-14 rounded-[14px] border-2 transition-all ${form.bedrooms === br ? 'border-[#01CBD2] bg-[rgba(1,203,210,0.06)]' : 'border-[#E8E8E8]'
+                    }`}
                 >
-                  <span style={{
-                    fontSize: '15px',
-                    fontWeight: form.bedrooms === br ? 700 : 400,
-                    color: form.bedrooms === br ? '#01CBD2' : '#050B2E',
-                  }}>
+                  <span style={{ fontSize: '15px', fontWeight: form.bedrooms === br ? 700 : 400, color: form.bedrooms === br ? '#01CBD2' : '#050B2E' }}>
                     {br}
                   </span>
                 </button>
@@ -519,25 +598,13 @@ export default function AddRequest() {
               Unit status preference
             </p>
             <div className="space-y-3">
-              <OptionButton
-                value="Ready"
-                label="Ready to move"
-                icon="✅"
-                selected={form.unitStatus === 'Ready'}
-                onSelect={() => setForm(f => ({ ...f, unitStatus: 'Ready' }))}
-              />
-              <OptionButton
-                value="Offplan"
-                label="Off-plan"
-                icon="🏗️"
-                selected={form.unitStatus === 'Offplan'}
-                onSelect={() => setForm(f => ({ ...f, unitStatus: 'Offplan' }))}
-              />
+              <OptionButton value="Ready" label="Ready to move" icon="✅" selected={form.unitStatus === 'Ready'} onSelect={() => setForm(f => ({ ...f, unitStatus: 'Ready' }))} />
+              <OptionButton value="Offplan" label="Off-plan" icon="🏗️" selected={form.unitStatus === 'Offplan'} onSelect={() => setForm(f => ({ ...f, unitStatus: 'Offplan' }))} />
             </div>
           </div>
         )}
 
-        {/* Step 6: Budget Range (Ready) */}
+        {/* Step 6: Budget Range */}
         {currentStep === 6 && form.unitStatus === 'Ready' && (
           <div>
             <p className="text-[#050B2E] mb-2" style={{ fontSize: '22px', fontWeight: 700 }}>
@@ -548,19 +615,13 @@ export default function AddRequest() {
             </p>
             <div className="space-y-3">
               {BUDGET_RANGES.map(range => (
-                <OptionButton
-                  key={range}
-                  value={range}
-                  label={range}
-                  selected={form.budgetRange === range}
-                  onSelect={() => setForm(f => ({ ...f, budgetRange: range }))}
-                />
+                <OptionButton key={range} value={range} label={range} selected={form.budgetRange === range} onSelect={() => setForm(f => ({ ...f, budgetRange: range }))} />
               ))}
             </div>
           </div>
         )}
 
-        {/* Step 7: Preferred Areas (Ready) */}
+        {/* Step 7: Preferred Areas */}
         {currentStep === 7 && form.unitStatus === 'Ready' && (
           <div>
             <p className="text-[#050B2E] mb-2" style={{ fontSize: '22px', fontWeight: 700 }}>
@@ -575,11 +636,8 @@ export default function AddRequest() {
                   key={area}
                   type="button"
                   onClick={() => toggleArea(area)}
-                  className={`px-4 py-2.5 rounded-full border-2 transition-all ${
-                    form.areas.includes(area)
-                      ? 'border-[#01CBD2] bg-[#01CBD2] text-white'
-                      : 'border-[#E8E8E8] text-[#050B2E]'
-                  }`}
+                  className={`px-4 py-2.5 rounded-full border-2 transition-all ${form.areas.includes(area) ? 'border-[#01CBD2] bg-[#01CBD2] text-white' : 'border-[#E8E8E8] text-[#050B2E]'
+                    }`}
                   style={{ fontSize: '14px', fontWeight: form.areas.includes(area) ? 600 : 400 }}
                 >
                   {area}
@@ -589,7 +647,7 @@ export default function AddRequest() {
           </div>
         )}
 
-        {/* Step 8: Payment Method (Ready) */}
+        {/* Step 8: Payment Method */}
         {currentStep === 8 && form.unitStatus === 'Ready' && (
           <div>
             <p className="text-[#050B2E] mb-2" style={{ fontSize: '22px', fontWeight: 700 }}>
@@ -599,25 +657,13 @@ export default function AddRequest() {
               Select your payment method
             </p>
             <div className="space-y-3">
-              <OptionButton
-                value="Cash"
-                label="Cash"
-                icon="💵"
-                selected={form.paymentMethod === 'Cash'}
-                onSelect={() => setForm(f => ({ ...f, paymentMethod: 'Cash' }))}
-              />
-              <OptionButton
-                value="Mortgage"
-                label="Mortgage"
-                icon="🏦"
-                selected={form.paymentMethod === 'Mortgage'}
-                onSelect={() => setForm(f => ({ ...f, paymentMethod: 'Mortgage' }))}
-              />
+              <OptionButton value="Cash" label="Cash" icon="💵" selected={form.paymentMethod === 'Cash'} onSelect={() => setForm(f => ({ ...f, paymentMethod: 'Cash' }))} />
+              <OptionButton value="Mortgage" label="Mortgage" icon="🏦" selected={form.paymentMethod === 'Mortgage'} onSelect={() => setForm(f => ({ ...f, paymentMethod: 'Mortgage' }))} />
             </div>
           </div>
         )}
 
-        {/* Step 9: Mortgage Eligibility (Ready + Mortgage) */}
+        {/* Step 9: Mortgage Eligibility */}
         {currentStep === 9 && form.paymentMethod === 'Mortgage' && (
           <div>
             <p className="text-[#050B2E] mb-2" style={{ fontSize: '22px', fontWeight: 700 }}>
@@ -627,27 +673,9 @@ export default function AddRequest() {
               Let agents know your mortgage status
             </p>
             <div className="space-y-3">
-              <OptionButton
-                value="Yes"
-                label="Yes, I am eligible"
-                icon="✅"
-                selected={form.mortgageEligible === 'Yes'}
-                onSelect={() => setForm(f => ({ ...f, mortgageEligible: 'Yes' }))}
-              />
-              <OptionButton
-                value="No"
-                label="No, not yet"
-                icon="❌"
-                selected={form.mortgageEligible === 'No'}
-                onSelect={() => setForm(f => ({ ...f, mortgageEligible: 'No' }))}
-              />
-              <OptionButton
-                value="not sure"
-                label="Not sure"
-                icon="🤔"
-                selected={form.mortgageEligible === 'not sure'}
-                onSelect={() => setForm(f => ({ ...f, mortgageEligible: 'not sure' }))}
-              />
+              <OptionButton value="Yes" label="Yes, I am eligible" icon="✅" selected={form.mortgageEligible === 'Yes'} onSelect={() => setForm(f => ({ ...f, mortgageEligible: 'Yes' }))} />
+              <OptionButton value="No" label="No, not yet" icon="❌" selected={form.mortgageEligible === 'No'} onSelect={() => setForm(f => ({ ...f, mortgageEligible: 'No' }))} />
+              <OptionButton value="not sure" label="Not sure" icon="🤔" selected={form.mortgageEligible === 'not sure'} onSelect={() => setForm(f => ({ ...f, mortgageEligible: 'not sure' }))} />
             </div>
           </div>
         )}
@@ -662,25 +690,13 @@ export default function AddRequest() {
               Choose your payment plan preference
             </p>
             <div className="space-y-3">
-              <OptionButton
-                value="Long-term payment plan"
-                label="Long-term payment plan"
-                icon="📅"
-                selected={form.paymentPlan === 'Long-term payment plan'}
-                onSelect={() => setForm(f => ({ ...f, paymentPlan: 'Long-term payment plan' }))}
-              />
-              <OptionButton
-                value="Short-term payment plan"
-                label="Short-term payment plan"
-                icon="⚡"
-                selected={form.paymentPlan === 'Short-term payment plan'}
-                onSelect={() => setForm(f => ({ ...f, paymentPlan: 'Short-term payment plan' }))}
-              />
+              <OptionButton value="Long-term payment plan" label="Long-term payment plan" icon="📅" selected={form.paymentPlan === 'Long-term payment plan'} onSelect={() => setForm(f => ({ ...f, paymentPlan: 'Long-term payment plan' }))} />
+              <OptionButton value="Short-term payment plan" label="Short-term payment plan" icon="⚡" selected={form.paymentPlan === 'Short-term payment plan'} onSelect={() => setForm(f => ({ ...f, paymentPlan: 'Short-term payment plan' }))} />
             </div>
           </div>
         )}
 
-        {/* Step 11: Developer Preference (Offplan) */}
+        {/* Step 11: Developer Preference */}
         {currentStep === 11 && form.unitStatus === 'Offplan' && (
           <div>
             <p className="text-[#050B2E] mb-2" style={{ fontSize: '22px', fontWeight: 700 }}>
@@ -690,25 +706,13 @@ export default function AddRequest() {
               This helps agents match you better
             </p>
             <div className="space-y-3">
-              <OptionButton
-                value="Yes"
-                label="Yes, I have preferences"
-                icon="✅"
-                selected={form.hasDeveloperPreference === true}
-                onSelect={() => setForm(f => ({ ...f, hasDeveloperPreference: true }))}
-              />
-              <OptionButton
-                value="No"
-                label="No, open to all"
-                icon="🌐"
-                selected={form.hasDeveloperPreference === false}
-                onSelect={() => setForm(f => ({ ...f, hasDeveloperPreference: false }))}
-              />
+              <OptionButton value="Yes" label="Yes, I have preferences" icon="✅" selected={form.hasDeveloperPreference === true} onSelect={() => setForm(f => ({ ...f, hasDeveloperPreference: true }))} />
+              <OptionButton value="No" label="No, open to all" icon="🌐" selected={form.hasDeveloperPreference === false} onSelect={() => setForm(f => ({ ...f, hasDeveloperPreference: false }))} />
             </div>
           </div>
         )}
 
-        {/* Step 12: Select Developers (Offplan + Has Preference) */}
+        {/* Step 12: Select Developers */}
         {currentStep === 12 && form.hasDeveloperPreference && (
           <div>
             <p className="text-[#050B2E] mb-2" style={{ fontSize: '22px', fontWeight: 700 }}>
@@ -723,11 +727,8 @@ export default function AddRequest() {
                   key={dev}
                   type="button"
                   onClick={() => toggleDeveloper(dev)}
-                  className={`px-4 py-2.5 rounded-full border-2 transition-all ${
-                    form.selectedDevelopers.includes(dev)
-                      ? 'border-[#01CBD2] bg-[#01CBD2] text-white'
-                      : 'border-[#E8E8E8] text-[#050B2E]'
-                  }`}
+                  className={`px-4 py-2.5 rounded-full border-2 transition-all ${form.selectedDevelopers.includes(dev) ? 'border-[#01CBD2] bg-[#01CBD2] text-white' : 'border-[#E8E8E8] text-[#050B2E]'
+                    }`}
                   style={{ fontSize: '14px', fontWeight: form.selectedDevelopers.includes(dev) ? 600 : 400 }}
                 >
                   {dev}
@@ -760,13 +761,12 @@ export default function AddRequest() {
         {currentStep === 14 && (
           <div>
             <p className="text-[#050B2E] mb-2" style={{ fontSize: '22px', fontWeight: 700 }}>
-              Review your request
+              {isEditMode ? 'Review your changes' : 'Review your request'}
             </p>
             <p className="text-[#999] mb-5" style={{ fontSize: '15px' }}>
               This is how your request will appear to agents
             </p>
 
-            {/* Generated Summary */}
             <div className="bg-gradient-to-br from-[#01CBD2] to-[#00a8ae] rounded-[20px] p-5 mb-4 text-white">
               <p style={{ fontSize: '17px', fontWeight: 600, lineHeight: 1.5 }}>
                 {generateSummary()}
@@ -780,7 +780,6 @@ export default function AddRequest() {
               )}
             </div>
 
-            {/* Detailed breakdown */}
             <div className="bg-white rounded-[16px] overflow-hidden" style={{ boxShadow: '0 1px 6px rgba(0,0,0,0.08)' }}>
               {[
                 { label: 'Purpose', value: form.purpose },
@@ -810,17 +809,27 @@ export default function AddRequest() {
         )}
       </div>
 
-      {/* Bottom navigation */}
+      {/* Bottom CTA */}
       <div className="shrink-0 bg-white p-4 border-t border-[#F8F8F8]">
+        {/* In edit mode, after editing a specific step, offer going back to summary */}
+        {isEditMode && currentStep > 0 && currentStep < 14 && (
+          <button
+            onClick={() => setCurrentStep(0)}
+            className="w-full h-11 rounded-full border-2 border-[#E8E8E8] flex items-center justify-center mb-2"
+          >
+            <span style={{ fontSize: '14px', color: '#050B2E', fontWeight: 500 }}>Back to Summary</span>
+          </button>
+        )}
         <button
           onClick={handleNext}
           disabled={!canContinue()}
-          className={`w-full h-12 rounded-full flex items-center justify-center gap-2 transition-all ${
-            canContinue() ? 'bg-[#01CBD2] hover:bg-[#00a8ae]' : 'bg-[#E8E8E8] cursor-not-allowed'
-          }`}
+          className={`w-full h-12 rounded-full flex items-center justify-center gap-2 transition-all ${canContinue() ? 'bg-[#01CBD2] hover:bg-[#00a8ae]' : 'bg-[#E8E8E8] cursor-not-allowed'
+            }`}
         >
           <span className={`${canContinue() ? 'text-white' : 'text-[#A6A6A6]'}`} style={{ fontSize: '16px', fontWeight: 600 }}>
-            {currentStep === 14 ? '🚀 Publish Request' : 'Continue'}
+            {currentStep === 14
+              ? (isEditMode ? '💾 Save Changes' : '🚀 Publish Request')
+              : 'Continue'}
           </span>
           {currentStep < 14 && canContinue() && <ChevronRight size={18} color="white" />}
         </button>
