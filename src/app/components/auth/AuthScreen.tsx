@@ -3,6 +3,10 @@ import { useNavigate } from 'react-router';
 import { useApp } from '../AppContext';
 import { StatusBar } from '../StatusBar';
 import { Eye, EyeOff, Building2, Users, ChevronLeft, ChevronDown, Check } from 'lucide-react';
+// @ts-ignore
+import logoIcon from '../../../assets/logo-icon.png';
+// @ts-ignore
+import logoFull from '../../../assets/logo-full.png';
 
 type Step =
   | 'welcome'
@@ -257,11 +261,11 @@ export default function AuthScreen() {
     const fullName = `${form.firstName} ${form.lastName}`.trim() || 'User';
     return (
       <div className="min-h-screen bg-[#050B2E] flex flex-col items-center justify-center px-6" style={{ fontFamily: "'TT Commons', sans-serif" }}>
-        <div
-          className="w-24 h-24 rounded-full flex items-center justify-center mb-6"
-          style={{ background: 'rgba(1,203,210,0.15)' }}
-        >
-          <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+        {/* Logo */}
+        <img src={logoIcon} alt="Duseat" className="h-16 w-auto mb-8" style={{ filter: 'brightness(0) invert(1)' }} />
+
+        <div className="w-20 h-20 rounded-full flex items-center justify-center mb-6" style={{ background: 'rgba(1,203,210,0.15)' }}>
+          <svg width="44" height="44" viewBox="0 0 48 48" fill="none">
             <circle cx="24" cy="24" r="24" fill="rgba(1,203,210,0.2)" />
             <path d="M14 24L21 31L34 18" stroke="#01CBD2" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
@@ -290,46 +294,45 @@ export default function AuthScreen() {
     return (
       <div className="min-h-screen bg-[#050B2E] flex flex-col" style={{ fontFamily: "'TT Commons', sans-serif" }}>
         <StatusBar dark />
-        <div className="flex-1 flex flex-col items-center justify-center px-6 pb-10">
-          {/* Logo */}
-          <div className="mb-8 text-center">
-            <div className="w-16 h-16 rounded-2xl bg-[#01CBD2] flex items-center justify-center mb-4 mx-auto">
-              <Building2 size={32} color="white" />
-            </div>
-            <p className="text-white" style={{ fontSize: '30px', fontWeight: 800 }}>Duseat</p>
-            <p className="text-[#01CBD2]" style={{ fontSize: '14px' }}>Real Estate Marketplace</p>
-          </div>
 
-          <div className="mb-10 text-center">
-            <p className="text-white mb-2" style={{ fontSize: '22px', fontWeight: 600, lineHeight: 1.3 }}>
-              Connect investors with agents
-            </p>
-            <p className="text-[#A6A6A6]" style={{ fontSize: '15px' }}>
-              Post requests. Receive offers. Close deals.
-            </p>
-          </div>
+        {/* Hero cover */}
+        <div className="relative w-full" style={{ height: '55vh', minHeight: 260 }}>
+          <img
+            src="https://images.unsplash.com/photo-1743819458014-f5cf74f175e3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=800"
+            alt="Dubai skyline"
+            className="w-full h-full object-cover"
+            style={{ opacity: 0.55 }}
+          />
+          {/* gradient overlay */}
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(5,11,46,0.3) 0%, rgba(5,11,46,0.95) 100%)' }} />
 
-          <div className="w-full rounded-2xl overflow-hidden mb-10" style={{ height: '160px' }}>
-            <img
-              src="https://images.unsplash.com/photo-1743819458014-f5cf74f175e3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=800"
-              alt="Dubai skyline"
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#050B2E] to-transparent pointer-events-none" />
+          {/* Logo centered on cover */}
+          <div className="absolute inset-0 flex flex-col items-center justify-center">
+            <img src={logoFull} alt="Duseat" className="h-14 w-auto" style={{ filter: 'brightness(0) invert(1)' }} />
+            <p className="text-[#01CBD2] mt-2" style={{ fontSize: '13px', letterSpacing: '2px', fontWeight: 500 }}>REAL ESTATE MARKETPLACE</p>
           </div>
+        </div>
 
+        {/* Bottom CTA */}
+        <div className="flex-1 flex flex-col justify-end px-6 pb-12 pt-6">
+          <p className="text-white text-center mb-2" style={{ fontSize: '22px', fontWeight: 700, lineHeight: 1.35 }}>
+            Where investors meet<br />the best agents
+          </p>
+          <p className="text-[#A6A6A6] text-center mb-8" style={{ fontSize: '14px' }}>
+            Post requests · Receive offers · Close deals
+          </p>
           <div className="w-full space-y-3">
             <button
               onClick={() => setStep('login')}
-              className="w-full h-[52px] bg-[#01CBD2] rounded-[26px] text-white"
-              style={{ fontSize: '17px', fontWeight: 600 }}
+              className="w-full h-[54px] bg-[#01CBD2] rounded-[27px] text-white"
+              style={{ fontSize: '17px', fontWeight: 700, boxShadow: '0 4px 20px rgba(1,203,210,0.4)' }}
             >
               Sign In
             </button>
             <button
               onClick={() => setStep('signup-type')}
-              className="w-full h-[52px] border border-[rgba(255,255,255,0.3)] rounded-[26px] text-white"
-              style={{ fontSize: '17px', fontWeight: 500 }}
+              className="w-full h-[54px] rounded-[27px] text-white"
+              style={{ fontSize: '17px', fontWeight: 500, border: '1.5px solid rgba(255,255,255,0.25)', background: 'rgba(255,255,255,0.07)' }}
             >
               Create Account
             </button>
@@ -349,6 +352,8 @@ export default function AuthScreen() {
             <ChevronLeft size={18} color="#01CBD2" />
             <span style={{ fontSize: '15px' }}>Back</span>
           </button>
+          {/* Logo small */}
+          <img src={logoFull} alt="Duseat" className="h-8 w-auto mb-6" />
           <p className="text-[#050B2E] mb-1" style={{ fontSize: '26px', fontWeight: 700 }}>Welcome back 👋</p>
           <p className="text-[#999] mb-8" style={{ fontSize: '15px' }}>Sign in to your account</p>
 

@@ -50,21 +50,26 @@ export default function InvestorProfile() {
       </div>
 
       <div className="flex-1 overflow-y-auto pb-4">
-        {/* Cover */}
-        <div className="relative h-24 bg-[#050B2E] overflow-hidden">
-          <img src={DUBAI_BG} alt="Cover" className="w-full h-full object-cover opacity-60" />
-        </div>
+        {/* Cover + Avatar overlap container */}
+        <div className="relative">
+          {/* Cover image */}
+          <div className="h-28 bg-[#050B2E]">
+            <img src={DUBAI_BG} alt="Cover" className="w-full h-full object-cover opacity-60" />
+          </div>
 
-        {/* Profile section */}
-        <div className="bg-white px-4 pb-5 mb-4" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
-          <div className="-mt-9 mb-3">
+          {/* Profile avatar — sits on top of cover */}
+          <div className="absolute left-4 bottom-0 translate-y-1/2 z-10">
             <img
               src={INVESTOR_PHOTO}
               alt="Profile"
-              className="w-[75px] h-[75px] rounded-full object-cover border-4 border-white"
-              style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}
+              className="w-[80px] h-[80px] rounded-full object-cover border-4 border-white"
+              style={{ boxShadow: '0 4px 14px rgba(0,0,0,0.18)' }}
             />
           </div>
+        </div>
+
+        {/* Profile section */}
+        <div className="bg-white px-4 pb-5 mb-4 pt-12" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
           <div className="flex items-center gap-2 mb-0.5">
             <p className="text-[#050B2E]" style={{ fontSize: '21px', fontWeight: 600 }}>
               {userName || 'Anwar hosny'}

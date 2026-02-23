@@ -9,6 +9,7 @@ import AgentVerification from './components/agent/AgentVerification';
 import PlansPage from './components/agent/PlansPage';
 import AgentFavourites from './components/agent/AgentFavourites';
 import OfferSentPage from './components/agent/OfferSentPage';
+import CommentsPage from './components/agent/CommentsPage';
 import InvestorHome from './components/investor/InvestorHome';
 import InvestorDashboard from './components/investor/InvestorDashboard';
 import AddRequest from './components/investor/AddRequest';
@@ -64,6 +65,7 @@ export const router = createBrowserRouter([
       { path: 'agent/faq', Component: FaqPage },
       { path: 'agent/support', Component: SupportPage },
       { path: 'agent/notifications', Component: NotificationsPage },
+      { path: 'agent/comments/:requestId', Component: CommentsPage },
 
       // ─── Investor routes ─────────────────────────────────
       { path: 'investor', Component: InvestorHome },

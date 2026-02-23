@@ -5,6 +5,8 @@ import { StatusBar } from '../StatusBar';
 import { BottomNav } from '../BottomNav';
 import { MOCK_REQUESTS, MOCK_AGENTS, MY_REQUESTS } from '../MockData';
 import { useApp } from '../AppContext';
+// @ts-ignore
+import logoIcon from '../../../assets/logo-icon.png';
 
 const INVESTOR_PHOTO = 'https://images.unsplash.com/photo-1604346382498-34e8c19df705?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=200';
 
@@ -50,17 +52,28 @@ export default function InvestorHome() {
                   {' '}
                   <span style={{ fontWeight: 500 }}>{userName || 'Mohamed'}</span>
                 </p>
-                <p className="text-[#999]" style={{ fontSize: '11px' }}>Discover requests & top agents</p>
+                <p className="text-[#999]" style={{ fontSize: '11px' }}>Discover requests &amp; top agents</p>
               </div>
             </div>
-            <button
-              onClick={() => navigate('/investor/notifications')}
-              className="w-9 h-9 bg-[#F8F8F8] rounded-full flex items-center justify-center relative"
-            >
-              <Bell size={18} color="#050B2E" />
-              <div className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#E31D1C] rounded-full" />
-            </button>
+            <div className="flex items-center gap-2">
+              <img src={logoIcon} alt="Duseat" className="h-7 w-auto opacity-80" />
+              <button
+                onClick={() => navigate('/investor/chats')}
+                className="w-9 h-9 bg-[#F8F8F8] rounded-full flex items-center justify-center relative"
+              >
+                <MessageCircle size={18} color="#050B2E" />
+                <div className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#01CBD2] rounded-full" />
+              </button>
+              <button
+                onClick={() => navigate('/investor/notifications')}
+                className="w-9 h-9 bg-[#F8F8F8] rounded-full flex items-center justify-center relative"
+              >
+                <Bell size={18} color="#050B2E" />
+                <div className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#E31D1C] rounded-full" />
+              </button>
+            </div>
           </div>
+
         </div>
       </div>
 
@@ -160,9 +173,10 @@ export default function InvestorHome() {
           ) : (
             <div className="space-y-3">
               {filteredRequests.map(req => (
-                <div
+                <button
                   key={req.id}
-                  className="bg-white rounded-[16px] p-4"
+                  onClick={() => navigate(`/investor/offers/${req.id}`)}
+                  className="w-full bg-white rounded-[16px] p-4 text-left"
                   style={{ boxShadow: '0 1px 6px rgba(0,0,0,0.08)' }}
                 >
                   {/* Investor info row */}
@@ -225,7 +239,7 @@ export default function InvestorHome() {
                       </span>
                     )}
                   </div>
-                </div>
+                </button>
               ))}
             </div>
           )}

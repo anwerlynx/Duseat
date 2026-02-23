@@ -5,16 +5,19 @@ import { StatusBar } from '../StatusBar';
 import { BottomNav } from '../BottomNav';
 import { MOCK_REQUESTS, InvestorRequest } from '../MockData';
 import { useApp } from '../AppContext';
+// @ts-ignore
+import logoIcon from '../../../assets/logo-icon.png';
 
 type FeedTab = 'General' | 'Offers' | 'Real estate owners' | 'Archives';
 
 const AGENT_PHOTO = 'https://images.unsplash.com/photo-1632131016411-0183bc4efdd8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=200';
 
-function RequestCard({ req, onViewDetails, onApply, onMore }: {
+function RequestCard({ req, onViewDetails, onApply, onMore, onComments }: {
   req: InvestorRequest;
   onViewDetails: () => void;
   onApply: () => void;
   onMore: () => void;
+  onComments: () => void;
 }) {
   return (
     <div className="bg-white mx-3 mb-3 rounded-[16px] p-4" style={{ boxShadow: '0 1px 6px rgba(0,0,0,0.08)' }}>
@@ -102,8 +105,12 @@ function RequestCard({ req, onViewDetails, onApply, onMore }: {
             {req.offersCount} offers submitted
           </span>
         </div>
-        <button className="text-[#999]">
+        <button
+          onClick={onComments}
+          className="flex items-center gap-1 text-[#999] hover:text-[#01CBD2] transition-colors"
+        >
           <MessageSquare size={14} />
+          <span style={{ fontSize: '10px' }}>{req.offersCount}</span>
         </button>
       </div>
 
@@ -238,8 +245,9 @@ export default function AgentFeed() {
                 Opportunities don't wait — post your request and let offers come to you
               </p>
             </div>
-            {/* Action icons */}
+            {/* Logo + action icons */}
             <div className="flex items-center gap-2 shrink-0">
+              <img src={logoIcon} alt="Duseat" className="h-7 w-auto opacity-80" />
               <button
                 onClick={() => navigate('/agent/chats')}
                 className="w-9 h-9 bg-[#F8F8F8] rounded-full flex items-center justify-center relative"
@@ -306,6 +314,7 @@ export default function AgentFeed() {
             onViewDetails={() => navigate(`/agent/request/${req.id}`)}
             onApply={() => navigate(`/agent/submit-offer/${req.id}`)}
             onMore={() => setMoreSheet(req)}
+            onComments={() => navigate(`/agent/comments/${req.id}`)}
           />
         ))}
         <div className="h-2" />

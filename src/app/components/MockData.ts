@@ -60,6 +60,21 @@ export interface Chat {
   messages: ChatMessage[];
 }
 
+export interface Comment {
+  id: string;
+  requestId: string;
+  authorId: string;
+  authorName: string;
+  authorAvatar: string;
+  authorVerified: boolean;
+  authorRole: 'agent' | 'investor';
+  text: string;
+  createdAt: string;
+  likesCount: number;
+  liked: boolean;
+  replies?: Comment[];
+}
+
 export interface Agent {
   id: string;
   name: string;
@@ -394,6 +409,124 @@ export const MOCK_CHATS: Chat[] = [
     ],
   },
 ];
+
+export const MOCK_COMMENTS: Record<string, Comment[]> = {
+  'req-1': [
+    {
+      id: 'c1',
+      requestId: 'req-1',
+      authorId: 'agent-99',
+      authorName: 'Rami Al Hussein',
+      authorAvatar: 'https://images.unsplash.com/photo-1603252112050-5ee77b4b4fde?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=200',
+      authorVerified: true,
+      authorRole: 'agent',
+      text: 'Al Barsha has some great ready villas right now, several listings around 3.6–3.9M. Great timing to post this request!',
+      createdAt: '2 min ago',
+      likesCount: 7,
+      liked: false,
+      replies: [
+        {
+          id: 'c1-r1',
+          requestId: 'req-1',
+          authorId: 'inv-2',
+          authorName: 'Anwar Hosny',
+          authorAvatar: 'https://images.unsplash.com/photo-1604346382498-34e8c19df705?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=200',
+          authorVerified: true,
+          authorRole: 'investor',
+          text: "Yes! I'm flexible on the area slightly \u2014 Al Quoz or Umm Suqeim could work too if the specs match.",
+          createdAt: '1 min ago',
+          likesCount: 2,
+          liked: false,
+        },
+      ],
+    },
+    {
+      id: 'c2',
+      requestId: 'req-1',
+      authorId: 'agent-98',
+      authorName: 'Sarah Johnson',
+      authorAvatar: 'https://images.unsplash.com/photo-1769636929132-e4e7b50cfac0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=200',
+      authorVerified: true,
+      authorRole: 'agent',
+      text: 'I have a off-market 4BR villa in Al Barsha South that fits perfectly. Just sent you an offer!',
+      createdAt: '5 min ago',
+      likesCount: 4,
+      liked: true,
+      replies: [],
+    },
+    {
+      id: 'c3',
+      requestId: 'req-1',
+      authorId: 'agent-97',
+      authorName: 'Khalid Al Hamdan',
+      authorAvatar: 'https://images.unsplash.com/photo-1763478958776-ebd04b6459ee?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=200',
+      authorVerified: false,
+      authorRole: 'agent',
+      text: 'Mortgage timeline might be tight with the current valuations in that area. A cash offer would be more competitive.',
+      createdAt: '12 min ago',
+      likesCount: 1,
+      liked: false,
+      replies: [],
+    },
+    {
+      id: 'c4',
+      requestId: 'req-1',
+      authorId: 'agent-96',
+      authorName: 'Anwar El-Tayeb',
+      authorAvatar: 'https://images.unsplash.com/photo-1632131016411-0183bc4efdd8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=200',
+      authorVerified: true,
+      authorRole: 'agent',
+      text: 'Budget looks solid for that area. Al Barsha 1 has some prime options right now. Happy to arrange a viewing this week.',
+      createdAt: '18 min ago',
+      likesCount: 10,
+      liked: false,
+      replies: [
+        {
+          id: 'c4-r1',
+          requestId: 'req-1',
+          authorId: 'agent-100',
+          authorName: 'Nour Khalil',
+          authorAvatar: 'https://images.unsplash.com/photo-1704627363842-a169b9743309?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=200',
+          authorVerified: false,
+          authorRole: 'agent',
+          text: 'Agreed! The flexible handover is a big plus. Makes negotiations much smoother.',
+          createdAt: '15 min ago',
+          likesCount: 3,
+          liked: false,
+        },
+        {
+          id: 'c4-r2',
+          requestId: 'req-1',
+          authorId: 'inv-2',
+          authorName: 'Anwar Hosny',
+          authorAvatar: 'https://images.unsplash.com/photo-1604346382498-34e8c19df705?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=200',
+          authorVerified: true,
+          authorRole: 'investor',
+          text: 'Yes please! Would love to arrange a tour this weekend if possible.',
+          createdAt: '10 min ago',
+          likesCount: 0,
+          liked: false,
+        },
+      ],
+    },
+  ],
+  'req-2': [
+    {
+      id: 'c5',
+      requestId: 'req-2',
+      authorId: 'agent-95',
+      authorName: 'Mohamed Salah',
+      authorAvatar: 'https://images.unsplash.com/photo-1632131016411-0183bc4efdd8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=200',
+      authorVerified: true,
+      authorRole: 'agent',
+      text: 'Downtown 2BR with 7%+ ROI is very achievable. Burj Khalifa view units are moving fast though — suggest acting quickly.',
+      createdAt: '30 min ago',
+      likesCount: 14,
+      liked: false,
+      replies: [],
+    },
+  ],
+};
 
 export const MOCK_AGENTS: Agent[] = [
   {

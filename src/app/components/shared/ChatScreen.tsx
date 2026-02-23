@@ -80,27 +80,67 @@ function ChatMenu({ isAgent, onConfirmDeal, onClose, onClosChat }: {
   isAgent: boolean; onConfirmDeal: () => void; onClose: () => void; onClosChat: () => void;
 }) {
   return (
-    <div className="absolute top-14 right-3 z-50 bg-white rounded-[16px] w-56 overflow-hidden" style={{ boxShadow: '0 8px 32px rgba(0,0,0,0.18)' }}>
-      <button onClick={() => { onConfirmDeal(); onClose(); }} className="w-full flex items-center gap-3 px-4 py-4 border-b border-[#F8F8F8]">
-        <div className="w-6 h-6 rounded-full border-2 border-[#01CBD2] flex items-center justify-center">
-          <div className="w-2 h-2 rounded-full bg-[#01CBD2]" />
-        </div>
-        <span className="text-[#01CBD2]" style={{ fontSize: '15px', fontWeight: 600 }}>Confirm deal</span>
-      </button>
-      <button onClick={() => { onClosChat(); onClose(); }} className="w-full flex items-center gap-3 px-4 py-4 border-b border-[#F8F8F8]">
-        <X size={18} color="#E31D1C" />
-        <span className="text-[#E31D1C]" style={{ fontSize: '15px', fontWeight: 600 }}>Close chat</span>
-      </button>
-      {[
-        { icon: Flag, label: 'Report user', color: '#050B2E' },
-        { icon: Search, label: 'Search', color: '#050B2E' },
-        { icon: BellOff, label: 'Mute notifications', color: '#050B2E' },
-      ].map(({ icon: Icon, label, color }) => (
-        <button key={label} onClick={onClose} className="w-full flex items-center gap-3 px-4 py-4 border-b border-[#F8F8F8] last:border-0">
-          <Icon size={18} color={color} />
-          <span style={{ fontSize: '15px', color }}>{label}</span>
+    <>
+      <div className="absolute inset-0 z-40" onClick={onClose} />
+      <div className="absolute top-14 right-3 z-50 bg-white rounded-[16px] w-56 overflow-hidden" style={{ boxShadow: '0 8px 32px rgba(0,0,0,0.18)' }}>
+        <button onClick={() => { onConfirmDeal(); onClose(); }} className="w-full flex items-center gap-3 px-4 py-4 border-b border-[#F8F8F8]">
+          <div className="w-6 h-6 rounded-full border-2 border-[#01CBD2] flex items-center justify-center">
+            <div className="w-2 h-2 rounded-full bg-[#01CBD2]" />
+          </div>
+          <span className="text-[#01CBD2]" style={{ fontSize: '15px', fontWeight: 600 }}>Confirm deal</span>
         </button>
-      ))}
+        <button onClick={() => { onClosChat(); onClose(); }} className="w-full flex items-center gap-3 px-4 py-4 border-b border-[#F8F8F8]">
+          <X size={18} color="#E31D1C" />
+          <span className="text-[#E31D1C]" style={{ fontSize: '15px', fontWeight: 600 }}>Close chat</span>
+        </button>
+        {[
+          { icon: Flag, label: 'Report user', color: '#050B2E' },
+          { icon: Search, label: 'Search', color: '#050B2E' },
+          { icon: BellOff, label: 'Mute notifications', color: '#050B2E' },
+        ].map(({ icon: Icon, label, color }) => (
+          <button key={label} onClick={onClose} className="w-full flex items-center gap-3 px-4 py-4 border-b border-[#F8F8F8] last:border-0">
+            <Icon size={18} color={color} />
+            <span style={{ fontSize: '15px', color }}>{label}</span>
+          </button>
+        ))}
+      </div>
+    </>
+  );
+}
+
+/* ─── Close Chat Sheet ─── */
+function CloseChatSheet({ onConfirm, onCancel }: { onConfirm: () => void; onCancel: () => void }) {
+  return (
+    <div className="absolute inset-x-0 bottom-0 z-50 flex flex-col justify-end">
+      <div className="absolute inset-0" style={{ background: 'rgba(0,0,0,0.4)' }} onClick={onCancel} />
+      <div className="relative bg-white rounded-t-[24px] px-5 pt-4 pb-8" style={{ boxShadow: '0 -4px 32px rgba(0,0,0,0.12)' }}>
+        <div className="w-10 h-1 bg-[#E0E0E0] rounded-full mx-auto mb-5" />
+        <div className="flex flex-col items-center mb-6">
+          <div className="w-14 h-14 rounded-full bg-[rgba(227,29,28,0.08)] flex items-center justify-center mb-3">
+            <X size={26} color="#E31D1C" />
+          </div>
+          <p className="text-[#050B2E] text-center" style={{ fontSize: '18px', fontWeight: 700 }}>Close this chat?</p>
+          <p className="text-[#999] text-center mt-1" style={{ fontSize: '14px', lineHeight: 1.5 }}>
+            The conversation will be archived. You can still view it from your chat history.
+          </p>
+        </div>
+        <div className="space-y-3">
+          <button
+            onClick={onConfirm}
+            className="w-full h-12 rounded-full text-white"
+            style={{ background: '#E31D1C', fontSize: '16px', fontWeight: 600 }}
+          >
+            Yes, close chat
+          </button>
+          <button
+            onClick={onCancel}
+            className="w-full h-12 border border-[#E8E8E8] rounded-full text-[#050B2E]"
+            style={{ fontSize: '16px', fontWeight: 500 }}
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -228,6 +268,7 @@ export default function ChatScreen() {
   const [showAttachments, setShowAttachments] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [showNewMessages, setShowNewMessages] = useState(false);
+  const [showCloseSheet, setShowCloseSheet] = useState(false);
   const [dealStep, setDealStep] = useState<'none' | 'confirm' | 'budget' | 'feedback' | 'done'>('none');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chat = MOCK_CHATS[0];
@@ -344,14 +385,25 @@ export default function ChatScreen() {
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-2 py-3 space-y-2" onClick={() => showMenu && setShowMenu(false)}>
-        {/* System message */}
-        <div className="px-3 py-3 mx-2">
-          <p className="text-[#050B2E]" style={{ fontSize: '14px', lineHeight: 1.6 }}>
-            The investor has accepted this offer for request #917212. This chat has been created automatically to complete the deal details.
-          </p>
-          <div className="flex items-center gap-2 mt-1">
-            <span className="text-[#A6A6A6]" style={{ fontSize: '11px' }}>System message</span>
-            <span className="text-[#A6A6A6]" style={{ fontSize: '11px' }}>11:06</span>
+        {/* System message — styled as a centered bubble */}
+        <div className="flex justify-center my-3 px-4">
+          <div
+            className="max-w-[85%] rounded-[18px] rounded-bl-sm px-4 py-3 text-center"
+            style={{
+              background: 'linear-gradient(135deg, rgba(1,203,210,0.12) 0%, rgba(5,11,46,0.06) 100%)',
+              border: '1px solid rgba(1,203,210,0.2)',
+            }}
+          >
+            <div className="flex items-center justify-center gap-1.5 mb-1">
+              <div className="w-4 h-4 rounded-full bg-[#01CBD2] flex items-center justify-center">
+                <span style={{ fontSize: '8px', color: 'white', fontWeight: 700 }}>S</span>
+              </div>
+              <span style={{ fontSize: '10px', color: '#01CBD2', fontWeight: 700, letterSpacing: '0.5px' }}>SYSTEM</span>
+            </div>
+            <p className="text-[#050B2E]" style={{ fontSize: '12px', lineHeight: 1.6 }}>
+              The investor has accepted this offer for request <span style={{ fontWeight: 700, color: '#01CBD2' }}>#917212</span>. This chat has been created automatically to complete the deal details.
+            </p>
+            <p className="text-[#A6A6A6] mt-1" style={{ fontSize: '10px' }}>11:06</p>
           </div>
         </div>
 
@@ -461,7 +513,13 @@ export default function ChatScreen() {
           isAgent={isAgent}
           onConfirmDeal={() => setDealStep('confirm')}
           onClose={() => setShowMenu(false)}
-          onClosChat={() => navigate(-1)}
+          onClosChat={() => setShowCloseSheet(true)}
+        />
+      )}
+      {showCloseSheet && (
+        <CloseChatSheet
+          onConfirm={() => { setShowCloseSheet(false); navigate(-1); }}
+          onCancel={() => setShowCloseSheet(false)}
         />
       )}
       {dealStep === 'confirm' && (
