@@ -1,4 +1,5 @@
 import { createBrowserRouter, Outlet } from 'react-router';
+import SplashScreen from './components/auth/SplashScreen';
 import AuthScreen from './components/auth/AuthScreen';
 import AgentFeed from './components/agent/AgentFeed';
 import RequestDetails from './components/agent/RequestDetails';
@@ -44,7 +45,8 @@ export const router = createBrowserRouter([
     path: '/',
     Component: Root,
     children: [
-      { index: true, Component: AuthScreen },
+      { index: true, Component: SplashScreen },
+      { path: 'auth', Component: AuthScreen },
 
       // ─── Agent routes ───────────────────────────────────
       { path: 'agent', Component: AgentFeed },
